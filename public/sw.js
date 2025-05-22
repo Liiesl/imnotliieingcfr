@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v1';
+const CACHE_NAME = 'v1.1';
 const ASSETS = [
   '/',
   '/index.html',
@@ -14,7 +14,7 @@ const ASSETS = [
   '/manhwa.css',
   '/signup.html',
   '/scripts/auth.js',
-  'scripts/firebase-auth.js'
+  '/scripts/firebase-auth.js'
   // Add other essential assets here
 ];
 
