@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(43, 43, 43, 0.95);
+      border-radius: 20px;
+      padding: 2rem;
+      padding-top: 6rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 80px;
+      margin-top: 4rem;
+      text-align: center;
+    }
+
+    .scanner-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #ffffff, #b0b0b0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    .scanner-subtitle {
+      font-size: 1rem;
+      color: #b0b0b0;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .toggle-buttons button {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+      max-width: 200px;
+    }
+
+    .toggle-buttons button.active {
+      background: rgba(74, 158, 255, 0.2);
+      border-color: #4a9eff;
+      box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+    }
+
+    .toggle-buttons button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .file-input, .camera-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 2.5rem 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .file-input:hover, .camera-input:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .file-input label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+    }
+
+    .file-input i {
+      font-size: 2.5rem;
+      color: #4a9eff;
+    }
+
+    video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .scan-button {
+      background: #4a9eff;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .scan-button:disabled {
+      background: #2a2a2a;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .scan-button:not(:disabled):hover {
+      background: #3a8eff;
+      transform: translateY(-2px);
+    }
+
+    .result {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      word-break: break-all;
+    }
+
+    .result-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .result-label {
+      font-weight: 600;
+      color: #b0b0b0;
+    }
+
+    .scanned-url {
+      color: #4a9eff;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .scanned-url:hover {
+      color: #3a8eff;
+    }
+
+    .error {
+      color: #ff5c5c;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer p {
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .footer a:hover {
+      color: #4a9eff;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: right;
+      margin-left: auto;
+      gap: 0.5rem;
+    }
+
+    #searchInput {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      outline: none;
+      width: 200px;
+    }
+
+    #searchInput::placeholder {
+      color: #b0b0b0;
+    }
+
+    .search-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .search-button:hover {
+      background: rgba(74, 158, 255, 0.1);
+      color: #4a9eff;
+    }
+
+    .search-form {
+       margin: 0;
+      padding: 0;
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .container {
+        padding: 1.5rem;
+        margin-bottom: 100px;
+      }
+
+      .scanner-title {
+        font-size: 2rem;
+      }
+
+      .scanner-subtitle {
+        font-size: 0.9rem;
+      }
+
+      .toggle-buttons {
+        flex-direction: column;
+      }
+
+      .toggle-buttons button {
+        max-width: 100%;
+      }
+
+      .file-input, .camera-input {
+        padding: 1.5rem 1rem;
+      }
+
+      .footer {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      .social-links {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .scanner-title {
+        font-size: 1.75rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      .file-input, .camera-input {
+        padding: 1rem;
+      }
+
+      .scan-button {
+        padding: 0.8rem 1.5rem;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script type ="module" src="/scripts/firebase-auth.js"></script>
+  <script type ="module" src="/scripts/auth.js"></script>
+</head>
+<body>
+  <header class="header">
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <div class="search-bar">
+        <input type="text" placeholder="Search tools..." id="searchInput" name="q">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </form>
+  </header>
+  <div id="sidebar-container"></div>
+
+  <div class="container">
+      <h1 class="scanner-title">QR Code Scanner</h1>
+      <p class="scanner-subtitle">Upload an image or use your camera to scan QR codes instantly</p>
+
+      <div class="toggle-buttons">
+        <button id="fileToggle" class="active" type="button">Upload Image</button>
+        <button id="cameraToggle" type="button">Use Camera</button>
+      </div>
+
+      <div id="fileInputSection" class="file-input">
+        <label for="qrImage">
+          <i class="fas fa-qrcode"></i>
+          <span>Drag & Drop or Click to Upload</span>
+        </label>
+        <input type="file" id="qrImage" accept="image/*" style="display: none;">
+      </div>
+
+      <div id="cameraInputSection" class="camera-input hidden">
+        <video id="cameraFeed" autoplay playsinline></video>
+      </div>
+
+      <button class="scan-button" id="scanButton" disabled>
+        Scan QR Code
+      </button>
+
+      <div class="result" id="result"></div>
+      <div class="error" id="error"></div>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2023 Imnotliieing. All rights reserved. | <a href="/privacy-policy">Privacy Policy</a> | <a href="/terms-of-service">Terms of Service</a></p>
+    <div class="social-links">
+      <a href="https://youtube.com/@Vfrix" target="_blank">
+        <i class="fab fa-youtube"></i>
+        <span>Youtube</span>
+      </a>
+      <a href="https://github.com/Liiesl" target="_blank">
+        <i class="fab fa-github"></i>
+        <span>Github</span>
+      </a>
+      <a href="https://instagram.com/suryaalingga" target="_blank">
+        <i class="fab fa-instagram"></i>
+        <span>Instagram</span>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    // Variables
+    const fileInputSection = document.getElementById('fileInputSection');
+    const cameraInputSection = document.getElementById('cameraInputSection');
+    const fileToggle = document.getElementById('fileToggle');
+    const cameraToggle = document.getElementById('cameraToggle');
+    const qrImageInput = document.getElementById('qrImage');
+    const cameraFeed = document.getElementById('cameraFeed');
+    const scanButton = document.getElementById('scanButton');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+
+    let cameraActive = false;
+
+    // Toggle between file upload and camera
+    fileToggle.addEventListener('click', () => {
+      fileInputSection.classList.remove('hidden');
+      cameraInputSection.classList.add('hidden');
+      fileToggle.classList.add('active');
+      cameraToggle.classList.remove('active');
+      scanButton.disabled = true;
+      resultDiv.textContent = '';
+      errorDiv.textContent = '';
+    });
+
+    cameraToggle.addEventListener('click', async () => {
+      fileInputSection.classList.add('hidden');
+      cameraInputSection.classList.remove('hidden');
+      fileToggle.classList.remove('active');
+      cameraToggle.classList.add('active');
+      resultDiv.textContent = '';
+      errorDiv.textContent = '';
+      await startCamera();
+    });
+
+    // Start the camera
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraFeed.srcObject = stream;
+        cameraActive = true;
+        scanButton.disabled = false;
+      } catch (error) {
+        console.error('Failed to access camera:', error);
+        errorDiv.textContent = 'Unable to access the camera. Please ensure you have granted camera permissions.';
+        cameraActive = false;
+        scanButton.disabled = true;
+      }
+    }
+
+    // Function to capture image from camera and scan QR code
+    function captureAndScanQRCode() {
+      if (!cameraActive) {
+        errorDiv.textContent = 'Camera is not active. Please enable the camera first.';
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = cameraFeed.videoWidth;
+      canvas.height = cameraFeed.videoHeight;
+      canvas.getContext('2d').drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+      const base64Image = canvas.toDataURL('image/png');
+      scanQRCode(base64Image);
+    }
+
+    // Read file as base64
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Function to scan the QR code
+    async function scanQRCode(base64Image) {
+      try {
+        errorDiv.textContent = 'Scanning...';
+        const response = await fetch('/.netlify/functions/qr-scanner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: base64Image }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to scan QR code.');
+        }
+        
+        const data = await response.json();
+        const qrResult = data[0]?.symbol[0]?.data;
+        errorDiv.textContent = '';
+
+        if (qrResult) {
+          resultDiv.innerHTML = '';
+          const resultContainer = document.createElement('div');
+          resultContainer.classList.add('result-container');
+
+          const label = document.createElement('span');
+          label.textContent = 'Scanned Result:';
+          label.classList.add('result-label');
+          resultContainer.appendChild(label);
+
+          if (isURL(qrResult)) {
+            const link = document.createElement('a');
+            link.href = qrResult;
+            link.target = '_blank';
+            link.textContent = qrResult;
+            link.classList.add('scanned-url');
+            resultContainer.appendChild(link);
+          } else {
+            const plainText = document.createElement('span');
+            plainText.textContent = qrResult;
+            plainText.classList.add('result-text');
+            resultContainer.appendChild(plainText);
+          }
+
+          resultDiv.appendChild(resultContainer);
+        } else {
+          errorDiv.textContent = 'No QR code found in the image.';
+        }
+      } catch (error) {
+        console.error(error);
+        errorDiv.textContent = 'An error occurred while scanning the QR code.';
+      }
+    }
+
+    // Function to check if a string is a valid URL
+    function isURL(str) {
+      try {
+        new URL(str);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Event listener for file selection
+    qrImageInput.addEventListener('change', async (event) => {
+      const [file] = event.target.files;
+      if (file) {
+        scanButton.disabled = false;
+        errorDiv.textContent = '';
+        try {
+          const base64Image = await readFileAsBase64(file);
+          scanButton.onclick = () => scanQRCode(base64Image);
+        } catch (error) {
+          console.error(error);
+          errorDiv.textContent = 'Failed to load the image.';
+        }
+      } else {
+        scanButton.disabled = true;
+        resultDiv.textContent = '';
+        errorDiv.textContent = '';
+      }
+    });
+
+    // Event listener for scan button
+    scanButton.addEventListener('click', () => {
+      if (cameraActive) {
+        captureAndScanQRCode();
+      }
+    });
+
+    // Load sidebar
+    window.addEventListener('DOMContentLoaded', function () {
+      fetch('/sidebar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sidebar-container').innerHTML = data;
+          const sidebar = document.getElementById('sidebar');
+          const sidebarOverlay = document.getElementById('sidebarOverlay');
+          const menuButton = document.getElementById('menuButton');
+          
+          if (!sidebar || !sidebarOverlay || !menuButton) {
+            console.error('Sidebar elements not found.');
+            return;
+          }
+          
+          menuButton.addEventListener('click', function () {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+          });
+          
+          sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+          });
+        })
+        .catch(error => {
+          console.error('Failed to load sidebar:', error);
+        });
+    });
+    // Search handler for all pages
+    function handleSearch(event) {
+        event.preventDefault();
+        const searchTerm = document.getElementById('searchInput').value.trim();
+        const baseUrl = '/index.html'; // Always points to root
+
+        if (searchTerm) {
+            window.location.href = `${baseUrl}?search=${encodeURIComponent(searchTerm)}`;
+        } else {
+            window.location.href = baseUrl;
+        }
+        }
+
+    // On home page load
+      window.addEventListener('DOMContentLoaded', function () {
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('search');
+
+        // Only run on home page (root index.html)
+        if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+            // Initialize search if parameter exists
+            if (searchTerm) {
+                document.getElementById('searchInput').value = searchTerm;
+                filterSections(searchTerm.toLowerCase());
+            }
+
+            // Initialize search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                filterSections(e.target.value.toLowerCase());
+            });
+        }
+
+    function filterSections(term) {
+        const sections = document.querySelectorAll('section:not(.tools-section)');
+        const cards = document.querySelectorAll('.card');
+
+        sections.forEach(section => {
+        section.classList.toggle('hidden-section', term !== '');
+        });
+
+        cards.forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const description = card.querySelector('.card-description').textContent.toLowerCase();
+        card.style.display = (title.includes(term) || description.includes(term)) 
+            ? 'flex' 
+            : 'none';
+        });
+
+        document.querySelector('.tools-section').style.display = 'block';
+    }
+    });
+  </script>
+</body>
+</html>

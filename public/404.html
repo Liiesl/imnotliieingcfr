@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page Not Found | Imnotliieing</title>
+  <style>
+    /* General Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #a0a0a0;
+    }
+    .navigation-links {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .navigation-links a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: small;
+      transition: color 0.3s ease;
+    }
+    .navigation-links a:hover {
+      color: #a0a0a0;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer p {
+      margin: 0.5rem 0;
+    }
+
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .footer a:hover {
+      color: #4a9eff;
+      background: rgba(74, 158, 255, 0.1);
+    }
+
+    .footer {
+        padding: 0.8rem;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: right;
+      margin-left: auto;
+      gap: 0.5rem;
+    }
+
+    #searchInput {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      outline: none;
+      width: 200px;
+    }
+
+    #searchInput::placeholder {
+      color: #b0b0b0;
+    }
+
+    .search-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .search-button:hover {
+      background: rgba(74, 158, 255, 0.1);
+      color: #4a9eff;
+    }
+
+    .search-form {
+      margin: 0;
+      padding: 0;
+      margin-left: auto;
+     }
+
+  </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <!-- Sidebar Container -->
+  <div id="sidebar-container"></div>
+  <header class="header">
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <div class="search-bar">
+        <input type="text" placeholder="Search tools..." id="searchInput" name="q">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </form>
+  </header>
+
+  <div class="container">
+    <h1>404 - Page Not Found</h1>
+    <p>Oops! The page you're looking for doesn't exist. It might have been moved or deleted.</p>
+    
+    <!-- Navigation Links -->
+    <div class="navigation-links">
+      <a href="/">Home</a>
+      <a href="/games/minesweeper.html">Minesweeper</a>
+      <a href="/tools/Longer-Appearance-Srt.html">Longer Appearance</a>
+      <a href="/tools/qrcode.html">QR Code Scanner</a>
+      <a href="/tools/manhwa-tracker.html">Manhwa Tracker</a>
+    </div>
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2023 Imnotliieing. All rights reserved. | <a href="/privacy-policy">Privacy Policy</a> | <a href="/terms-of-service">Terms of Service</a></p>
+      <div class="social-links">
+        <a href="https://twitter.com/imnotliieing" target="_blank">
+          <i class="fab fa-twitter"></i>
+          <span>Twitter</span>
+        </a>
+        <a href="https://facebook.com/imnotliieing" target="_blank">
+          <i class="fab fa-facebook"></i>
+          <span>Facebook</span>
+        </a>
+        <a href="https://instagram.com/imnotliieing" target="_blank">
+          <i class="fab fa-instagram"></i>
+          <span>Instagram</span>
+        </a>
+      </div>
+    </footer>
+  </div>
+  <script>
+        window.addEventListener('DOMContentLoaded', function () {
+        fetch('/sidebar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('sidebar-container').innerHTML = data;
+
+                // Reinitialize the sidebar functionality
+                const sidebar = document.getElementById('sidebar');
+                const sidebarOverlay = document.getElementById('sidebarOverlay');
+                const menuButton = document.getElementById('menuButton');
+
+                if (!sidebar || !sidebarOverlay || !menuButton) {
+                    console.error('Sidebar elements not found. Ensure sidebar.html is properly loaded.');
+                    return;
+                }
+
+                // Toggle sidebar visibility with smooth animation
+                menuButton.addEventListener('click', function () {
+                    sidebar.classList.toggle('open');
+                    sidebarOverlay.classList.toggle('open'); // Show/hide the overlay
+                });
+
+                // Close sidebar when clicking outside (on the overlay)
+                sidebarOverlay.addEventListener('click', function () {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('open'); // Hide the overlay
+                });
+            })
+            .catch(error => {
+                console.error('Failed to load sidebar:', error);
+            });
+    });
+        // Search handler for all pages
+        function handleSearch(event) {
+            event.preventDefault();
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const baseUrl = '/index.html'; // Always points to root
+
+            if (searchTerm) {
+                window.location.href = `${baseUrl}?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                window.location.href = baseUrl;
+            }
+            }
+
+        // On home page load
+         window.addEventListener('DOMContentLoaded', function () {
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchTerm = urlParams.get('search');
+
+            // Only run on home page (root index.html)
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                // Initialize search if parameter exists
+                if (searchTerm) {
+                    document.getElementById('searchInput').value = searchTerm;
+                    filterSections(searchTerm.toLowerCase());
+                }
+
+                // Initialize search functionality
+                document.getElementById('searchInput').addEventListener('input', function(e) {
+                    filterSections(e.target.value.toLowerCase());
+                });
+            }
+
+        function filterSections(term) {
+            const sections = document.querySelectorAll('section:not(.tools-section)');
+            const cards = document.querySelectorAll('.card');
+
+            sections.forEach(section => {
+            section.classList.toggle('hidden-section', term !== '');
+            });
+
+            cards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const description = card.querySelector('.card-description').textContent.toLowerCase();
+            card.style.display = (title.includes(term) || description.includes(term)) 
+                ? 'flex' 
+                : 'none';
+            });
+
+            document.querySelector('.tools-section').style.display = 'block';
+        }
+        });
+  </script>
+</body>
+</html>

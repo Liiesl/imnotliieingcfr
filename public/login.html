@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Imnotliieing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script type="module" src="/scripts/firebase-auth.js"></script>
+  <script type="module" src="/scripts/auth.js"></script>
+</head>
+<body>
+  <div id="sidebar-container"></div>
+  
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to continue to your account</p>
+    </div>
+
+    <form class="auth-form" onsubmit="event.preventDefault(); signIn();">
+      <div class="input-group">
+        <input type="email" id="auth-email" class="auth-input" placeholder="Email address" required>
+        <i class="fas fa-envelope"></i>
+      </div>
+
+      <!-- For login.html -->
+      <div class="input-group">
+        <input type="password" id="auth-password" class="auth-input" placeholder="Password" required>
+        <i class="fas fa-lock"></i>
+        <i class="fas fa-eye toggle-password" onclick="togglePassword('auth-password')"></i>
+      </div>
+
+      <button type="submit" class="auth-button">
+        <i class="fas fa-sign-in-alt"></i>
+        Sign In
+      </button>
+
+      <div class="auth-divider">
+        <span>or continue with</span>
+      </div>
+
+      <button type="button" class="auth-button google" onclick="signInWithGoogle()">
+        <i class="fab fa-google"></i>
+        Sign in with Google
+      </button>
+
+      <div class="error-message" id="error-message"></div>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="/signup.html">Sign up</a></p>
+    </div>
+  </div>
+  <script>
+    // DOMContentLoaded event listener
+    window.addEventListener('DOMContentLoaded', function () {
+     // Existing code for fetching sidebar.html
+     fetch('/sidebar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sidebar-container').innerHTML = data;
+
+          const sidebar = document.getElementById('sidebar');
+          const sidebarOverlay = document.getElementById('sidebarOverlay');
+          const menuButton = document.getElementById('menuButton');
+
+          if (!sidebar || !sidebarOverlay || !menuButton) {
+            console.error('Sidebar elements not found. Ensure sidebar.html is properly loaded.');
+            return;
+          }
+
+          menuButton.addEventListener('click', function () {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+          });
+
+          sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+          });
+        })
+        .catch(error => {
+          console.error('Failed to load sidebar:', error);
+        });
+    })
+
+  </script>
+</body>
+</html>

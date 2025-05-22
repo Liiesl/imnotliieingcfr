@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Credits Scene Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* Styles from Lyie.html for control panel and general layout */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5; /* Light background for the controls area */
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .control-panel {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 600px; /* Adjusted width */
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="file"] { /* Added file input */
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box; /* Include padding in width */
+    }
+
+    button {
+      background-color: #5865f2; /* Discord Blurple */
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #4752c4; /* Darker Blurple */
+    }
+
+    .preview-container {
+      width: 100%;
+      max-width: 780px; /* Max width for the preview */
+      overflow: hidden; /* Hide any overflow before capture */
+      margin: 0 auto; /* Center the preview container */
+       border: 1px solid #ccc; /* Add a border to see the preview boundary */
+    }
+
+    /* Loading spinner CSS from Lyie.html */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+      vertical-align: middle; /* Align spinner with text */
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Styles from lyie2.html */
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      /* Discord Colors */
+      --discord-bg: #313338; /* Main background */
+      --discord-darker: #1e1f22; /* Server list background */
+      --discord-dark: #0c0c0d; /* Body background */
+      --discord-light: #b9bbbe; /* Timestamps, muted text */
+      --discord-lighter: #dcddde; /* Regular message text */
+      --discord-white: #ffffff; /* Usernames, channel names */
+      --discord-blurple: #5865f2; /* Links, highlights */
+      --discord-link: #00aff4; /* Links */
+      --discord-green: #3ba55c; /* Online status */
+      --discord-red: #ed4245; /* Errors, mentions */
+      --discord-yellow: #faa61a; /* Idle status */
+      --discord-channel: #949ba4; /* Channel names in sidebar, role headers */
+      --discord-selected: #4f545c99; /* Active channel background */
+      --discord-muted: #80848e; /* Muted text */
+      --discord-category: #949ba4; /* Category headers */
+      --discord-header: #242528; /* Server header background */
+      --discord-header-secondary: #96989d; /* Icons in header */
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+
+      /* Borders */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    #capture-target {
+      font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--discord-dark); /* Use Discord dark for the container bg */
+      color: var(--discord-white);
+      font-size: 1.5rem;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden; /* Prevent body scroll */
+      /* Define explicit dimensions for capture */
+      width: 780px; /* Fixed width for consistency */
+      height: 500px; /* Fixed height for consistency */
+      max-height: 660px;
+      position: relative; /* Needed for absolute positioning inside */
+    }
+
+    .app-container {
+      display: flex;
+      height: 100%; /* Fill the capture target height */
+      max-height: 100%;
+    }
+
+    /* Server Sidebar (Left) */
+    .server-sidebar {
+      width: 180px; /* Adjusted width */
+      background-color: var(--discord-darker);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto; /* Allow scrolling if content overflows */
+    }
+
+    .server-header {
+      height: 48px;
+      padding: 0 var(--spacing-md);
+      background-color: var(--discord-header);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      position: sticky; /* Keep header visible */
+      top: 0;
+      z-index: 2; /* Above scrolling content */
+      flex-shrink: 0;
+    }
+
+    .server-header-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden; /* Prevent text overflow */
+    }
+
+    .server-name {
+      color: var(--discord-white);
+      font-weight: 600;
+      font-size: 1.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .server-header-icon {
+      color: var(--discord-header-secondary);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      margin-left: var(--spacing-xs);
+    }
+
+    .server-content {
+      padding: var(--spacing-md) 0;
+      flex: 1; /* Allow content to grow */
+    }
+
+    .channel-category {
+      text-transform: uppercase;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--discord-category);
+      padding: var(--spacing-md) var(--spacing-md) var(--spacing-xs);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .channel-category::after {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E");
+      background-size: contain;
+      flex-shrink: 0;
+      margin-left: var(--spacing-xs);
+    }
+
+    .channel-category.collapsed::after {
+      transform: rotate(-90deg);
+    }
+
+    .server-channels {
+      list-style: none;
+    }
+
+    .channel-item {
+      padding: var(--spacing-xs) var(--spacing-md);
+      color: var(--discord-channel);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      margin: 0 8px;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .channel-item.active {
+      background-color: var(--discord-active); /* Use active color */
+      color: var(--discord-white);
+    }
+
+    .channel-item::before {
+      content: "#";
+      margin-right: var(--spacing-sm);
+      font-weight: 400;
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    .channel-item.locked::before {
+      content: "🔒";
+      font-size: 0.8em;
+    }
+
+    .channel-item.voice::before {
+      content: "🔊";
+      font-size: 0.8em;
+    }
+
+    /* Main Content Wrapper (NEW) */
+    .main-content-wrapper {
+        flex: 1; /* Take remaining space */
+        display: flex;
+        min-width: 0; /* Prevent flexbox overflow */
+        height: 100%;
+        max-height: 100%;
+    }
+
+    /* Main Content Area (Center) */
+    .discord-container {
+      flex: 1; /* Grow to fill space */
+      display: flex;
+      flex-direction: column;
+      background-color: var(--discord-bg);
+      min-width: 0; /* Prevent flexbox overflow */
+      height: 100%; /* Fill wrapper height */
+      max-height: 100%;
+    }
+
+    /* Channel Header */
+    .channel-header {
+      height: 48px;
+      padding: 0 var(--spacing-md);
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow-sm);
+      background-color: var(--discord-bg);
+      flex-shrink: 0; /* Prevent shrinking */
+      position: sticky; /* Keep header visible */
+      top: 0;
+      z-index: 1; /* Above messages */
+    }
+
+    .channel-name {
+      color: var(--discord-white);
+      font-weight: 600;
+      font-size: 2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .channel-name::before {
+      content: "#";
+      color: var(--discord-channel);
+      margin-right: var(--spacing-xs);
+    }
+
+    /* Messages Area */
+    .discord-messages {
+      display: flex;
+      flex-direction: column;
+      padding: var(--spacing-md);
+      overflow-y: auto; /* Enable scrolling for messages */
+      flex: 1; /* Take remaining vertical space */
+      background: var(--discord-bg); /* Ensure background covers */
+    }
+
+.powered-text {
+  margin-left: 10px;
+}
+
+    .message-group {
+      display: flex;
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      transform-origin: center left;
+      margin: 0 -16px;
+      border-radius: 8px;
+    }
+
+    .message-content {
+      flex: 1;
+      margin-left: var(--spacing-sm);
+      overflow: hidden; /* Prevent content overflow */
+    }
+
+    .message-header {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .message-username {
+      font-weight: 600;
+      color: var(--discord-white);
+      margin-right: var(--spacing-sm);
+      cursor: pointer; /* Indicate clickable */
+    }
+
+    .message-timestamp {
+      font-size: 1.2rem;
+      color: var(--discord-light);
+    }
+
+    .message-text {
+      color: var(--discord-lighter);
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      margin-bottom: var(--spacing-xs);
+      padding-right: var(--spacing-lg); /* Space for potential reactions */
+      line-height: 1.375rem; /* Discord's line height */
+    }
+
+    .message-highlight {
+      background-color: rgba(88, 101, 242, 0.15);
+      color: var(--discord-white);
+      padding: 2px 4px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    /* Avatar Styles */
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: var(--spacing-sm);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .message-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    /* Empty avatar div for subsequent messages */
+    .message-group + .message-group .message-avatar {
+        width: calc(40px + var(--spacing-sm)); /* Width + margin */
+        height: 0; /* Collapse height */
+        margin-right: 0;
+        visibility: hidden; /* Hide visually */
+    }
+    /* Adjust content margin when avatar is hidden */
+     .message-group + .message-group .message-content {
+        margin-left: 0;
+     }
+     /* Keep header info for subsequent messages */
+    .message-group + .message-group .message-header {
+        display: none; /* Hide subsequent headers */
+    }
+    .message-group + .message-group {
+        padding-top: 2px; /* Small gap between subsequent messages */
+        padding-bottom: 2px;
+        margin-bottom: 0; /* Remove bottom margin for grouped messages */
+    }
+     /* Add timestamp hover to subsequent messages */
+    .message-group + .message-group .message-text::before {
+        content: attr(data-timestamp); /* Use data attribute for timestamp */
+        display: inline-block;
+        width: calc(40px + var(--spacing-sm)); /* Match avatar space */
+        font-size: 0.6875rem;
+        color: var(--discord-light);
+        position: absolute;
+        left: -56px; /* Position left of the message text */
+        top: 0;
+        opacity: 0; /* Hidden by default */
+        pointer-events: none; /* Don't interfere with clicks */
+    }
+
+    /* Attachment Styles */
+    .message-attachment {
+      margin: var(--spacing-xs) 0;
+      margin-left: 10px;
+      width: 360px; /* Example fixed width */
+      height: 250px; /* Example fixed height */
+      border-radius: var(--radius-md);
+      overflow: hidden; /* This already hides overflow */
+      position: relative;
+      background-color: var(--discord-darker); /* BG for loading */
+      background-size: cover;         /* Scale to cover, cropping as needed */
+      background-position: center;    /* Center the image */
+      background-repeat: no-repeat;   /* Don't tile the image */
+    }
+
+    .attachment-image {
+      display: block; /* Remove extra space below image */
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-md); /* Optional, container overflow clips anyway */
+      /* Change object-fit to cover */
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    /* Link Styles */
+    a {
+      color: var(--discord-link);
+      text-decoration: none;
+    }
+
+    .github-link {
+      font-weight: 600;
+      color: var(--discord-blurple);
+      position: relative;
+    }
+
+    .github-link::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      transform: scaleX(0);
+      height: 1px; /* Thinner underline */
+      bottom: -1px;
+      left: 0;
+      background-color: var(--discord-link); /* Match hover color */
+      transform-origin: bottom right;
+      transition: transform 0.2s ease-out; /* Add transition back */
+    }
+
+    .user-sidebar {
+        width: 140px;
+        background-color: var(--discord-bg); /* Match main background */
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md) var(--spacing-md); /* Top, R, B, L */
+        overflow-y: auto; /* Allow scrolling */
+        height: 100%;
+        max-height: 100%;
+        border-left: 1px solid rgba(255, 255, 255, 0.06); /* Subtle separator */
+    }
+
+    .user-role-header {
+        text-transform: uppercase;
+        font-size: 0.75rem; /* 12px */
+        font-weight: 600;
+        color: var(--discord-channel); /* Use channel color */
+        margin-top: var(--spacing-sm); /* Space above role */
+        margin-bottom: var(--spacing-sm);
+        padding-left: var(--spacing-sm); /* Indent slightly */
+    }
+    .user-role-header:first-of-type {
+        margin-top: 0; /* No top margin for the first role */
+    }
+
+    .user-list {
+        list-style: none;
+    }
+
+    .user-list-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
+        margin-bottom: 2px; /* Small gap between users */
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+    }
+
+    .user-avatar {
+        width: 32px; /* Standard Discord user list avatar size */
+        height: 32px;
+        min-width: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-right: var(--spacing-sm);
+        position: relative;
+        background-color: var(--discord-darker); /* Placeholder bg */
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    /* Online status indicator */
+    .user-avatar::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--discord-green); /* Default to online */
+        border: 2px solid var(--discord-bg); /* Match sidebar bg */
+        box-sizing: border-box;
+    }
+    .user-list-item.offline .user-avatar::after {
+        background-color: var(--discord-muted); /* Grey for offline */
+    }
+     .user-list-item.idle .user-avatar::after {
+        background-color: var(--discord-yellow); /* Yellow for idle */
+         /* Optional: Add idle crescent moon */
+        /* clip-path: path('M10 2 A7 7 0 1 0 10 18 A4 4 0 1 1 10 2'); */
+    }
+    .user-list-item.dnd .user-avatar::after {
+        background-color: var(--discord-red); /* Red for DND */
+        /* Optional: Add DND minus sign */
+        /* content: '-'; color: white; font-size: 8px; line-height: 10px; text-align: center; */
+    }
+
+
+    .user-name {
+        color: var(--discord-channel); /* Default user color */
+        font-size: 0.9rem; /* Slightly smaller than messages */
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Example role color */
+    .user-list-item.admin .user-name {
+        color: var(--discord-red); /* Example admin color */
+    }
+
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center; margin-bottom: 20px;">Discord Credits Scene Generator</h1>
+
+  <div class="control-panel">
+    <div class="form-group">
+      <label for="channel-name-input">Manhwa/Channel Name:</label>
+      <input type="text" id="channel-name-input" value="that-kind-of-thing-happened" placeholder="Enter manhwa/channel name">
+    </div>
+     <div class="form-group">
+      <label for="username-input">Username:</label>
+      <input type="text" id="username-input" value="LyleMm" placeholder="Enter your username">
+    </div>
+    <div class="form-group">
+      <label for="github-link-input">GitHub Repo Link:</label>
+      <input type="text" id="github-link-input" value="https://github.com/Liiesl/ManhwaOCR" placeholder="Enter GitHub repo URL">
+    </div>
+     <div class="form-group">
+      <label for="cover-file-input">Select Cover Image File:</label> <!-- Changed label -->
+      <input type="file" id="cover-file-input" accept="image/*"> <!-- Changed input type, id, added accept -->
+    </div>
+    <!-- Removed Avatar URL Input -->
+
+    <button id="download-jpg">Download JPG</button>
+  </div>
+
+  <div class="preview-container">
+    <div id="capture-target"> <!-- Renamed from header-preview -->
+        <div class="app-container">
+
+            <div class="server-sidebar">
+              <div class="server-header">
+                <div class="server-header-content">
+                  <span class="server-name">Lyie MTL</span>
+                  <span class="server-header-icon">⌄</span> </div>
+              </div>
+              <div class="server-content">
+                <div class="channel-category">Text Channels</div>
+                <ul class="server-channels">
+                  <li class="channel-item">announcements</li>
+                  <li class="channel-item locked">rules</li>
+                  <li class="channel-item">general</li>
+                </ul>
+                <div class="channel-category">Active Projects</div>
+                <ul class="server-channels" id="active-projects-list">
+                  <!-- These will be dynamically filled -->
+                  <li class="channel-item" id="project-display-1">project-placeholder-1</li>
+                  <li class="channel-item" id="project-display-2">project-placeholder-2</li>
+                  <!-- This is the active one, linked to the input -->
+                  <li class="channel-item active" id="sidebar-channel-name">that-kind-of-thing-happened</li>
+                  <!-- This one will also be dynamically filled -->
+                  <li class="channel-item" id="project-display-3">project-placeholder-3</li>
+                </ul>
+                <div class="channel-category">Voice Channels</div>
+                <ul class="server-channels">
+                  <li class="channel-item voice">General</li>
+                  <li class="channel-item voice">AFK</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="main-content-wrapper">
+
+                <div class="discord-container">
+                  <div class="channel-header">
+                    <div class="channel-name" id="channel-name-display">that-kind-of-thing-happened</div>
+                  </div>
+                  <div class="discord-messages">
+                    <!-- Message Group 1: User Info -->
+                    <div class="message-group">
+                      <div class="message-avatar">
+                        <!-- Default/Predetermined Avatar -->
+                        <img id="user-avatar-msg" src="../assets/pfp/images.jpeg" alt="Translator Avatar" onerror="this.onerror=null; this.src='https://placehold.co/40x40/1e1f22/ffffff?text=??';">
+                      </div>
+                      <div class="message-content">
+                        <div class="message-header">
+                          <span class="message-username" id="message-username-display">LyleMm</span>
+                          <span class="message-timestamp">Today at 12:34 PM</span>
+                        </div>
+                        <!-- Optional first message text can go here -->
+                      </div>
+                    </div>
+
+                    <!-- Message Group 2: Image Attachment -->
+                    <div class="message-group">
+                      <div class="message-avatar">
+                         <!-- Empty placeholder for subsequent message -->
+                      </div>
+                      <div class="message-content">
+                        <div class="message-attachment" id="cover-attachment-container">
+                           <!-- Cover image - src updated by JS -->
+                           <span class="placeholder-text" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--discord-light);">Select Image</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Message Group 3: GitHub Link -->
+                    <div class="message-group">
+                      <div class="message-avatar">
+                         <!-- Empty placeholder for subsequent message -->
+                      </div>
+                      <div class="message-content">
+                         <div class="message-text" data-timestamp="12:35 PM"> <span class="powered-text">Powered By</span> <a id="github-link-display" href="https://github.com/Liiesl/ManhwaOCR" target="_blank" class="github-link">github.com/Liiesl/ManhwaOCR</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="user-sidebar">
+                    <div class="user-role-header">Translator - 1</div>
+                    <ul class="user-list">
+                        <li class="user-list-item translator admin"> <!-- Added admin for color -->
+                            <div class="user-avatar">
+                                <!-- Default/Predetermined Avatar -->
+                                <img id="user-avatar-sidebar" src="../assets/pfp/images.jpeg" alt="User Avatar" onerror="this.onerror=null; this.src='https://placehold.co/32x32/1e1f22/ffffff?text=??';">
+                            </div>
+                            <span class="user-name" id="sidebar-username-display">LyleMm</span>
+                        </li>
+                    </ul>
+
+                    <div class="user-role-header">CLRD - 1</div>
+                    <ul class="user-list">
+                         <li class="user-list-item clrd idle">
+                            <div class="user-avatar">
+                                 <img src="../assets/pfp/images.jpeg" alt="CLRD User Avatar" onerror="this.onerror=null; this.src='https://placehold.co/32x32/1e1f22/ffffff?text=CL';">
+                            </div>
+                            <span class="user-name" id="sidebar-username-display">LyleMm</span>
+                        </li>
+                    </ul>
+
+                    <div class="user-role-header">Typesetter - 1</div>
+                    <ul class="user-list">
+                        <li class="user-list-item typesetter">
+                            <div class="user-avatar">
+                                 <img src="../assets/pfp/images.jpeg" alt="Typesetter Avatar" onerror="this.onerror=null; this.src='https://placehold.co/32x32/1e1f22/ffffff?text=TS';">
+                            </div>
+                            <span class="user-name" id="sidebar-username-display">LyleMm</span>
+                        </li>
+                    </ul>
+
+                    <div class="user-role-header">Upload - 1</div>
+                    <ul class="user-list">
+                        <li class="user-list-item uploader offline">
+                            <div class="user-avatar">
+                                 <img src="../assets/pfp/images.jpeg" alt="Uploader Avatar" onerror="this.onerror=null; this.src='https://placehold.co/32x32/1e1f22/ffffff?text=UP';">
+                            </div>
+                            <span class="user-name" id="sidebar-username-display">LyleMm</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Input elements
+      const channelNameInput = document.getElementById('channel-name-input');
+      const usernameInput = document.getElementById('username-input');
+      const githubLinkInput = document.getElementById('github-link-input');
+      const coverFileInput = document.getElementById('cover-file-input'); // Changed ID reference
+      // Removed avatarUrlInput
+
+      // Display elements in the preview
+      const channelNameDisplay = document.getElementById('channel-name-display');
+      const sidebarChannelName = document.getElementById('sidebar-channel-name');
+      const messageUsernameDisplay = document.getElementById('message-username-display');
+      const sidebarUsernameDisplay = document.getElementById('sidebar-username-display');
+      const githubLinkDisplay = document.getElementById('github-link-display');
+      const coverAttachmentContainer = document.getElementById('cover-attachment-container'); // *** ADDED ***
+      // Removed userAvatarMsg and userAvatarSidebar references as they are now static/predetermined in HTML
+
+      // Download button and target element
+      const downloadJpgBtn = document.getElementById('download-jpg');
+      const captureTarget = document.getElementById('capture-target');
+
+      // Default Cover Image Source (fallback)
+      const defaultCoverBackground = 'url(https://placehold.co/400x350/313338/ffffff?text=Select+Image)'; // *** UPDATED ***
+
+  // Function to update preview elements
+  function updatePreviewText() {
+      const channelName = channelNameInput.value.trim() || 'channel-name'; // Use trim()
+      const username = usernameInput.value || 'Username';
+      const githubLink = githubLinkInput.value || '#';
+
+      // --- Project List Logic ---
+      const allProjectTitles = [
+          "ghostly",
+          "the-lord's-first-night",
+          "that-kind-of-thing-happened",
+          "the-eunuch-'situations'"
+      ];
+
+      // Filter out the currently active title
+      const otherTitles = allProjectTitles.filter(title => title.toLowerCase() !== channelName.toLowerCase());
+
+      // Get the display slots for non-active projects
+      const projectDisplaySlots = [
+          document.getElementById('project-display-1'),
+          document.getElementById('project-display-2'),
+          document.getElementById('project-display-3')
+      ];
+
+      // Populate the non-active slots with the other titles
+      projectDisplaySlots.forEach((slot, index) => {
+          if (slot) { // Check if the element exists
+              if (otherTitles[index]) {
+                  slot.textContent = otherTitles[index];
+                  slot.style.display = ''; // Make sure it's visible
+              } else {
+                  slot.style.display = 'none'; // Hide slot if no title for it
+              }
+          }
+      });
+       // --- End Project List Logic ---
+
+
+      // Update active channel name displays
+      channelNameDisplay.textContent = channelName;
+      sidebarChannelName.textContent = channelName; // Update the active LI's text
+
+      // Update user and link displays
+      messageUsernameDisplay.textContent = username;
+      sidebarUsernameDisplay.textContent = username;
+      githubLinkDisplay.href = githubLink;
+      githubLinkDisplay.textContent = githubLink.replace(/^https?:\/\//, ''); // Display link without protocol
+
+      // Cover image and avatars are handled separately or are static
+  }
+
+      // Add input event listeners to text input fields
+      [channelNameInput, usernameInput, githubLinkInput].forEach(input => {
+          input.addEventListener('input', updatePreviewText);
+      });
+
+  // Add change event listener for the file input
+  coverFileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      // Optional: Get placeholder text element if using it
+      const placeholder = coverAttachmentContainer.querySelector('.placeholder-text');
+
+      if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              // *** MODIFIED: Set background image ***
+              coverAttachmentContainer.style.backgroundImage = `url(${e.target.result})`;
+              if (placeholder) placeholder.style.display = 'none'; // Hide placeholder
+          }
+          reader.onerror = function() {
+              console.error("Error reading file");
+               // *** MODIFIED: Revert background image ***
+              coverAttachmentContainer.style.backgroundImage = defaultCoverBackground;
+              if (placeholder) placeholder.style.display = (defaultCoverBackground === 'none' ? 'block' : 'none'); // Show placeholder if default is none
+          }
+          reader.readAsDataURL(file);
+      } else {
+           // No file selected or not an image, revert to default
+           // *** MODIFIED: Revert background image ***
+           coverAttachmentContainer.style.backgroundImage = defaultCoverBackground;
+           if (placeholder) placeholder.style.display = (defaultCoverBackground === 'none' ? 'block' : 'none'); // Show placeholder if default is none
+
+           if (file) { // If a file was selected but wasn't an image
+               alert("Please select a valid image file (e.g., JPG, PNG, GIF).");
+           }
+      }
+  });
+
+      // Initial preview update on load
+      updatePreviewText();
+  // *** MODIFIED: Set initial background image ***
+  coverAttachmentContainer.style.backgroundImage = defaultCoverBackground;
+  const initialPlaceholder = coverAttachmentContainer.querySelector('.placeholder-text');
+   if (initialPlaceholder) initialPlaceholder.style.display = (defaultCoverBackground === 'none' ? 'block' : 'none');
+
+      // Generate and download image
+      downloadJpgBtn.addEventListener('click', function() {
+        // Button loading state
+        const originalBtnText = downloadJpgBtn.textContent;
+        downloadJpgBtn.innerHTML = '<div class="spinner"></div>Generating...';
+        downloadJpgBtn.disabled = true;
+
+        // Ensure scroll bars are not captured (by temporarily hiding overflow)
+        // Note: html2canvas sometimes struggles with complex overflow, setting explicit dimensions helps.
+        const originalOverflow = captureTarget.style.overflow;
+         const messagesContainer = captureTarget.querySelector('.discord-messages');
+         const originalMessagesScrollTop = messagesContainer.scrollTop;
+         messagesContainer.scrollTop = 0; // Scroll messages to top before capture
+
+        captureTarget.style.overflow = 'hidden';
+
+        // Configure html2canvas with options
+        const options = {
+          allowTaint: true,
+          useCORS: true,
+          backgroundColor: '#313338', // Explicit background
+          scale: 2,                 // Better resolution
+          logging: false,
+          // *** Use the element's actual rendered size for the canvas ***
+          width: captureTarget.offsetWidth,
+          height: captureTarget.offsetHeight,
+          // *** Ensure capture starts at the top-left of the element ***
+          scrollX: 0,
+          scrollY: -window.scrollY, // Account for page scroll if capture-target isn't fixed
+          // *** REMOVED windowWidth and windowHeight ***
+        };
+
+        // Use html2canvas to convert the target element to an image
+        html2canvas(captureTarget, options).then(function(canvas) {
+          // Convert canvas to a data URL (JPEG format with quality 0.95)
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+          // Create a filename based on the channel name
+          const fileNameBase = channelNameInput.value.trim().replace(/\s+/g, '-') || 'discord-credits';
+          const filename = `${fileNameBase}-credits.jpg`;
+
+          // Create a temporary link and trigger download
+          const link = document.createElement('a');
+          link.href = imgData;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Reset button state and styles
+          downloadJpgBtn.innerHTML = originalBtnText;
+          downloadJpgBtn.disabled = false;
+          captureTarget.style.overflow = originalOverflow;
+          messagesContainer.scrollTop = originalMessagesScrollTop; // Restore scroll position
+
+        }).catch(function(error) {
+          console.error('Error generating image:', error);
+          alert('There was an error generating the image. Check the console for details.');
+
+          // Reset button state and styles
+          downloadJpgBtn.innerHTML = originalBtnText;
+          downloadJpgBtn.disabled = false;
+          captureTarget.style.overflow = originalOverflow;
+          messagesContainer.scrollTop = originalMessagesScrollTop; // Restore scroll position
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manhwa Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="manhwa.css">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+  <div id="sidebar-container"></div>
+  <header class="header">
+    <form class="search-form" onsubmit="handleSearch(event)">
+        <div class="search-bar">
+          <input type="text" placeholder="Search tools..." id="searchInput" name="q">
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+    </form>
+</header>
+ <h1 class="tools-title">Manhwa Tracker</h1>
+  <div class="container">
+    <div class="tracker-container">
+      <form id="manhwaForm">
+        <input type="text" id="manhwaTitle" placeholder="Enter manhwa title" required>
+        <input type="url" id="manhwaUrl" placeholder="Enter manhwa URL" required>
+        <input type="number" id="lastChapter" placeholder="Last chapter read" step="0.1" required>
+        <button type="submit">
+          <i class="fas fa-plus"></i> Add Manhwa
+        </button>
+      </form>
+      <div class="controls">
+        <div class="filters">
+          <select id="domainFilter" class="filter-control">
+            <option value="">All Domains</option>
+          </select>
+          <input type="text" id="titleFilter" class="filter-control" placeholder="Filter by title...">
+        </div>
+        <select id="sortBy" class="sort-control">
+          <option value="a-z">A-Z (Title)</option>
+          <option value="latest">Latest Read</option>
+          <option value="oldest">Oldest Read</option>
+        </select>
+      </div>
+      <div id="manhwaList" class="manhwa-list"></div>
+    </div>
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Manhwa</h2>
+          <p class="modal-subtitle">Update the title and manage reading sources</p>
+        </div>
+        <span class="close">&times;</span>
+        <form id="editForm">
+          <input type="text" id="editTitle" placeholder="Manhwa Title" required>
+          <div id="urlsContainer">
+            <!-- URL inputs will be added here dynamically -->
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="add-url-btn" onclick="addUrlInput()">
+              <i class="fas fa-plus"></i> Add Reading Source
+            </button>
+            <button type="submit" class="save-changes-btn">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer class="footer">
+        <div class="social-links">
+            <a href="https://youtube.com/@Vfrix" target="_blank">
+                <i class="fab fa-youtube"></i>
+                <span>Youtube</span>
+            </a>
+            <a href="https://github.com/Liiesl" target="_blank">
+                <i class="fab fa-github"></i>
+                <span>Github</span>
+            </a>
+            <a href="https://instagram.com/suryaalingga" target="_blank">
+                <i class="fab fa-instagram"></i>
+                <span>Instagram</span>
+            </a>
+        </div>
+        <p>&copy; 2023 Imnotliieing. All rights reserved. | <a href="/privacy-policy">Privacy Policy</a> | <a href="/terms-of-service">Terms of Service</a></p>
+    </footer>
+
+  <script>
+    let database;
+    let editingManhwaId = null;
+    let allManhwas = [];
+
+    const firebaseConfig = {
+    apiKey: 
+    authDomain: 
+    projectId: 
+    storageBucket: 
+    messagingSenderId: 
+    appId: 
+    measurementId: 
+    };
+
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+
+        // DOM elements
+        const manhwaForm = document.getElementById('manhwaForm');
+        const manhwaList = document.getElementById('manhwaList');
+
+        // Form submission handler
+        manhwaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('manhwaTitle').value;
+            const url = document.getElementById('manhwaUrl').value;
+            const chapter = parseFloat(document.getElementById('lastChapter').value);
+            
+            database.ref('manhwas/' + Date.now()).set({
+                title,
+                url: [url],
+                lastChapter: chapter,
+                lastRead: new Date().toISOString()
+            });
+            
+            manhwaForm.reset();
+        });
+
+        // Real-time database listener
+        database.ref('manhwas').on('value', (snapshot) => {
+            const data = snapshot.val();
+            allManhwas = [];
+            const domains = new Set();
+
+            for (const manhwaId in data) {
+                const manhwa = data[manhwaId];
+                const urls = Array.isArray(manhwa.url) ? manhwa.url : [manhwa.url];
+                
+                const enhancedManhwa = {
+                    id: manhwaId,
+                    title: manhwa.title,
+                    urls: urls,
+                    lastChapter: manhwa.lastChapter,
+                    lastRead: manhwa.lastRead,
+                    domains: urls.map(url => getDomain(url))
+                };
+                
+                allManhwas.push(enhancedManhwa);
+                enhancedManhwa.domains.forEach(d => domains.add(d));
+            }
+
+            // Update domain filter
+            const domainSelect = document.getElementById('domainFilter');
+            const currentDomain = domainSelect.value;
+            domainSelect.innerHTML = '<option value="">All Domains</option>';
+            
+            Array.from(domains).sort().forEach(domain => {
+                const option = document.createElement('option');
+                option.value = domain;
+                option.textContent = domain;
+                domainSelect.appendChild(option);
+            });
+            
+            if (Array.from(domains).includes(currentDomain)) {
+                domainSelect.value = currentDomain;
+            }
+
+            processAndDisplayManhwas();
+        });
+
+        // Edit form submission
+        document.getElementById('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('editTitle').value;
+            const urlInputs = document.querySelectorAll('#urlsContainer input');
+            const urls = Array.from(urlInputs).map(input => input.value.trim()).filter(url => url);
+            
+            if (urls.length === 0) {
+                alert('Please enter at least one valid URL');
+                return;
+            }
+            
+            database.ref('manhwas/' + editingManhwaId).update({
+                title,
+                url: urls
+            });
+            
+            document.getElementById('editModal').style.display = 'none';
+        });
+
+        // Filter/Sort event listeners
+        document.getElementById('domainFilter').addEventListener('change', processAndDisplayManhwas);
+        document.getElementById('titleFilter').addEventListener('input', processAndDisplayManhwas);
+        document.getElementById('sortBy').addEventListener('change', processAndDisplayManhwas);
+
+    // Process and display manhwas
+    function processAndDisplayManhwas() {
+        const domainFilter = document.getElementById('domainFilter').value;
+        const titleFilter = document.getElementById('titleFilter').value.toLowerCase();
+        const sortBy = document.getElementById('sortBy').value;
+        const manhwaList = document.getElementById('manhwaList');
+
+        let processed = allManhwas.filter(manhwa => {
+            const matchesDomain = !domainFilter || manhwa.domains.includes(domainFilter);
+            const matchesTitle = manhwa.title.toLowerCase().includes(titleFilter);
+            return matchesDomain && matchesTitle;
+        });
+
+        switch(sortBy) {
+            case 'a-z':
+                processed.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            case 'latest':
+                processed.sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead));
+                break;
+            case 'oldest':
+                processed.sort((a, b) => new Date(a.lastRead) - new Date(b.lastRead));
+                break;
+        }
+
+        manhwaList.innerHTML = '';
+        processed.forEach(manhwa => {
+            const manhwaElement = document.createElement('div');
+            manhwaElement.className = 'manhwa-item';
+            manhwaElement.innerHTML = `
+                <div class="manhwa-info">
+                    <div class="manhwa-title">${manhwa.title}</div>
+                    <div class="manhwa-meta">
+                        <div class="manhwa-urls" data-urls='${JSON.stringify(manhwa.urls)}'>
+                        ${manhwa.domains.join(', ')}
+                        </div>
+                        <div>Chapter: ${manhwa.lastChapter}</div>
+                    </div>
+                    <div>Last Read: ${getRelativeTimeString(manhwa.lastRead)}</div>
+                </div>
+                <div class="manhwa-actions">
+                  <div class="update-chapter-container">
+                    <input type="number" class="update-chapter" placeholder="New chapter" step="0.1">
+                    <button onclick="updateChapter('${manhwa.id}')">
+                        <i class="fas fa-sync-alt"></i> Update
+                    </button>
+                  </div>
+                  <div class = "manhwa-db-buttons">
+                    <button class="edit-btn" onclick="openEditModal('${manhwa.id}')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="delete-btn" onclick="deleteManhwa('${manhwa.id}')">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                  </div>
+                </div>
+            `;
+
+            manhwaElement.addEventListener('click', (e) => {
+                if (e.target.closest('.manhwa-actions, input, button')) return;
+                const urls = JSON.parse(e.currentTarget.querySelector('.manhwa-urls').dataset.urls);
+                urls.length === 1 ? window.open(urls[0], '_blank') : showUrlModal(urls);
+            });
+
+            manhwaList.appendChild(manhwaElement);
+        });
+    }
+
+    // Utility functions
+    function getDomain(url) {
+        try {
+            const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+            return urlObj.hostname.replace(/^www\./, '');
+        } catch (e) {
+            return url;
+        }
+    }
+
+    function showUrlModal(urls) {
+        const modal = document.createElement('div');
+        modal.className = 'modal url-selection-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Select Reading Source</h2>
+                    <p class="modal-subtitle">Choose where you want to continue reading</p>
+                </div>
+                <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                <div class="url-buttons">
+                    ${urls.map(url => `
+                        <button class="url-button" onclick="window.open('${url}', '_blank'); this.closest('.modal').remove()">
+                            <i class="fas fa-external-link-alt"></i>
+                            ${getDomain(url)}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        modal.style.display = 'block';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => e.target === modal && modal.remove());
+    }
+
+    function getRelativeTimeString(date) {
+        const now = new Date();
+        const past = new Date(date);
+        const diffMs = now - past;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 10) return past.toLocaleDateString();
+        
+        const diffSeconds = Math.floor(diffMs / 1000);
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        const diffHours = Math.floor(diffMinutes / 60);
+
+        return diffSeconds < 60 ? `${diffSeconds} seconds ago` :
+            diffMinutes < 60 ? `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago` :
+            diffHours < 24 ? `${diffHours} hour${diffHours === 1 ? '' : 's'} ago` :
+            `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    }
+
+    // Window functions
+    window.updateChapter = (manhwaId) => {
+        const newChapter = parseFloat(document.querySelector(`#manhwaList [onclick="updateChapter('${manhwaId}')"]`).previousElementSibling.value);
+        if (!isNaN(newChapter)) {
+            database.ref('manhwas/' + manhwaId).update({
+                lastChapter: newChapter,
+                lastRead: new Date().toISOString()
+            });
+        }
+    };
+
+    window.deleteManhwa = (manhwaId) => {
+        if (confirm('Are you sure you want to delete this manhwa?')) {
+            database.ref('manhwas/' + manhwaId).remove();
+        }
+    };
+
+    window.openEditModal = (manhwaId) => {
+        editingManhwaId = manhwaId;
+        database.ref('manhwas/' + manhwaId).once('value', (snapshot) => {
+            const manhwa = snapshot.val();
+            const urls = Array.isArray(manhwa.url) ? manhwa.url : [manhwa.url];
+            document.getElementById('editTitle').value = manhwa.title;
+            const container = document.getElementById('urlsContainer');
+            container.innerHTML = '';
+            urls.forEach((url, index) => addUrlInput(url, index === 0));
+            document.getElementById('editModal').style.display = 'block';
+        });
+    };
+
+    window.addUrlInput = (value = '', isRequired = false) => {
+        const container = document.getElementById('urlsContainer');
+        const group = document.createElement('div');
+        group.className = 'url-input-group';
+        group.innerHTML = `
+            <input type="url" value="${value}" placeholder="Manhwa URL" ${isRequired ? 'required' : ''}>
+            <button type="button" class="delete-btn" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(group);
+    };
+
+    // Modal close handlers
+    document.querySelector('.close').onclick = () => {
+        document.getElementById('editModal').style.display = 'none';
+    };
+
+    window.onclick = (e) => {
+        if (e.target === document.getElementById('editModal')) {
+            document.getElementById('editModal').style.display = 'none';
+        }
+    };
+
+    document.getElementById('domainFilter').addEventListener('change', processAndDisplayManhwas);
+    document.getElementById('titleFilter').addEventListener('input', processAndDisplayManhwas);
+    document.getElementById('sortBy').addEventListener('change', processAndDisplayManhwas);
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .url-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .url-buttons button {
+        padding: 12px;
+        background: rgba(74, 158, 255, 0.2);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.3s ease;
+      }
+      .url-buttons button:hover {
+        background: #4a9eff;
+        transform: translateY(-2px);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Sidebar loading code
+    window.addEventListener('DOMContentLoaded', function () {
+      fetch('/sidebar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sidebar-container').innerHTML = data;
+          const sidebar = document.getElementById('sidebar');
+          const sidebarOverlay = document.getElementById('sidebarOverlay');
+          const menuButton = document.getElementById('menuButton');
+          
+          if (!sidebar || !sidebarOverlay || !menuButton) {
+            console.error('Sidebar elements not found.');
+            return;
+          }
+          
+          menuButton.addEventListener('click', function () {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+          });
+          
+          sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+          });
+        })
+        .catch(error => {
+          console.error('Failed to load sidebar:', error);
+        });
+    });
+ 
+            // Search handler for all pages
+        function handleSearch(event) {
+            event.preventDefault();
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const baseUrl = '/index.html'; // Always points to root
+
+            if (searchTerm) {
+                window.location.href = `${baseUrl}?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                window.location.href = baseUrl;
+            }
+            }
+
+        // On home page load
+         window.addEventListener('DOMContentLoaded', function () {
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchTerm = urlParams.get('search');
+
+            // Only run on home page (root index.html)
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                // Initialize search if parameter exists
+                if (searchTerm) {
+                    document.getElementById('searchInput').value = searchTerm;
+                    filterSections(searchTerm.toLowerCase());
+                }
+
+                // Initialize search functionality
+                document.getElementById('searchInput').addEventListener('input', function(e) {
+                    filterSections(e.target.value.toLowerCase());
+                });
+            }
+
+        function filterSections(term) {
+            const sections = document.querySelectorAll('section:not(.tools-section)');
+            const cards = document.querySelectorAll('.card');
+
+            sections.forEach(section => {
+            section.classList.toggle('hidden-section', term !== '');
+            });
+
+            cards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const description = card.querySelector('.card-description').textContent.toLowerCase();
+            card.style.display = (title.includes(term) || description.includes(term)) 
+                ? 'flex' 
+                : 'none';
+            });
+
+            document.querySelector('.tools-section').style.display = 'block';
+        }
+        });
+        // Update chapter function
+        window.updateChapter = (manhwaId) => {
+            const newChapter = parseFloat(document.querySelector(`#manhwaList [onclick="updateChapter('${manhwaId}')"]`).previousElementSibling.value);
+            if (!isNaN(newChapter)) {
+                database.ref('manhwas/' + manhwaId).update({
+                lastChapter: newChapter,
+                lastRead: new Date().toISOString()
+                });
+            }
+        };
+    // Delete function
+    window.deleteManhwa = (manhwaId) => {
+      if (confirm('Are you sure you want to delete this manhwa?')) {
+        database.ref('manhwas/' + manhwaId).remove();
+      }
+    };
+    // Add to existing script
+    function openEditModal(manhwaId) {
+        editingManhwaId = manhwaId;
+        const ref = database.ref('manhwas/' + manhwaId);
+        ref.once('value', (snapshot) => {
+            const manhwa = snapshot.val();
+            const urls = Array.isArray(manhwa.url) ? manhwa.url : [manhwa.url];
+            
+            document.getElementById('editTitle').value = manhwa.title;
+            const container = document.getElementById('urlsContainer');
+            container.innerHTML = '';
+            
+            urls.forEach((url, index) => {
+            addUrlInput(url, index === 0);
+            });
+            
+            document.getElementById('editModal').style.display = 'block';
+        });
+    }   
+    function addUrlInput(value = '', isRequired = false) {
+        const container = document.getElementById('urlsContainer');
+        const group = document.createElement('div');
+        group.className = 'url-input-group';
+        
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.value = value;
+        input.placeholder = 'Manhwa URL';
+        input.required = isRequired;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'delete-btn';
+        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        removeBtn.onclick = () => group.remove();
+        
+        group.appendChild(input);
+        group.appendChild(removeBtn);
+        container.appendChild(group);
+    }
+    // Add function to format relative time
+    function getRelativeTimeString(date) {
+      const now = new Date();
+      const past = new Date(date);
+      const diffMs = now - past;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      // If more than 10 days, return the date
+      if (diffDays > 10) {
+        return past.toLocaleDateString();
+      }
+
+      // Return relative time
+      if (diffSeconds < 60) {
+        return `${diffSeconds} seconds ago`;
+      } else if (diffMinutes < 60) {
+        return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+      } else if (diffHours < 24) {
+        return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+      } else {
+        return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+      }
+    }
+  </script>
+</body>
+</html>

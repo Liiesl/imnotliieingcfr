@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Imnotliieing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script type="module" src="/scripts/firebase-auth.js"></script>
+  <script type="module" src="/scripts/auth.js"></script>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join us and start exploring</p>
+    </div>
+
+    <form class="auth-form" onsubmit="event.preventDefault(); signUp();">
+      <div class="input-group">
+        <input type="email" id="auth-email" class="auth-input" placeholder="Email address" required>
+        <i class="fas fa-envelope"></i>
+      </div>
+
+      <!-- For signup.html -->
+      <div class="input-group">
+        <input type="password" id="auth-password" class="auth-input" placeholder="Password" required>
+        <i class="fas fa-lock"></i>
+        <i class="fas fa-eye toggle-password" onclick="togglePassword('auth-password')"></i>
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="auth-password-confirm" class="auth-input" placeholder="Confirm Password" required>
+        <i class="fas fa-lock"></i>
+        <i class="fas fa-eye toggle-password" onclick="togglePassword('auth-password-confirm')"></i>
+      </div>
+
+      <button type="submit" class="auth-button">
+        <i class="fas fa-user-plus"></i>
+        Create Account
+      </button>
+
+      <div class="auth-divider">
+        <span>or continue with</span>
+      </div>
+
+      <button type="button" class="auth-button google" onclick="signInWithGoogle()">
+        <i class="fab fa-google"></i>
+        Sign up with Google
+      </button>
+
+      <div class="error-message" id="error-message"></div>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a href="/login.html">Sign in</a></p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imnotliieing</title>
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#1a1a1a">
+
+  <!-- iOS Support -->
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- In <head> section of index.html, minesweeper.html, etc. -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script type ="module" src="/scripts/firebase-auth.js"></script>
+  <script type ="module" src="/scripts/auth.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ui-design.css">
+</head>
+<body>
+  <!-- Sidebar Container -->
+  <div id="sidebar-container"></div>
+  <header class="header">
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <div class="search-bar">
+        <input type="text" placeholder="Search tools..." id="searchInput" name="q">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </form>
+  </header>
+  <div class="container">
+    <section class="home-section">
+      <h1 class="home-title">Hi, i'm Surya Alingga </h1>
+      <div class="titlenav">
+        <p><a href="#illustration" class="titlenav-link">Illustration</a> | <a href="#ui-design" class="titlenav-link">UI-Design</a> | <a href="#video" class="titlenav-link">Video editing</a></p>
+      </div>
+      <div class="desc">
+        <p class="home-subtitle">I'm a passionate visual designer with a love for creating compelling illustrations, intuitive UI designs, and dynamic video content. My work blends creativity with functionality to tell stories and solve problems.</p>
+      </div>
+    </section>
+
+    <section id="illustration" class="IIllustration-section">
+      <div class="Illustration-container">
+        <h1>Illustration works</h1>
+        <p>coming soon.</p>
+        <img src="" alt="">
+      </div>
+      <div class="more-button" onclick="openillustrationpage()">
+        <div class="more-btn-title">More Illustration Works</div>
+      </div>
+    </section>
+
+    <section id="ui-design" class="UI-Design-section">
+      <h1>UI-Design works</h1>
+      <div class="UI-Design-container">
+        <div class="ManhwaOCR-containerh">
+          <div class="dimgcontainer">
+            <img src="./assets/ui design/ManhwaOCRhome.png" alt="img 1">
+            <img src="./assets/ui design/ManhwaOCRlanding.png" alt="img 2">
+          </div>
+          <div class="ui-info-container">
+            <h2>ManhwaOCR on<a href="https://github.com/Liiesl/ManhwaOCR" class="works-link">Github</a></h2>
+            <p>A user-friendly interface for Optical Character Recognition (OCR) specialized in extracting text from Manhwa and comics. Designed to simplify the process of digitizing and translating comic book text.</p>   
+          </div>  
+        </div>
+        <div class="ManhwaOCR-containerv">    
+          <div class="ui-info-container2">
+            <h2>locally run Manhwa Reader</h2>
+            <p>A sleek, minimalist reader application for enjoying Manhwa comics locally. Featuring an intuitive interface, customizable reading modes, and seamless navigation for an enhanced reading experience.</p>   
+          </div> 
+          <div class="dimgcontainerv">
+            <img src="./assets/ui design/ManhwaReaderHome.png" alt="img 3">
+            <img src="./assets/ui design/ManhwaReaderChapter.png" alt="img 2">
+            <img src="./assets/ui design/ManhwaReaderView.png" alt="img 1">
+          </div> 
+      </div>
+      <div class="more-button" onclick="openuipage()">
+        <div class="more-btn-title">More UI Works</div>
+      </div>
+    </section>
+
+    <section id="video" class="Video-section">
+      <div class="Video-container">
+        <h1>Video works</h1>
+        <p>coming soon.</p>
+        <img src="" alt="">
+      </div>
+      <div class="more-button" onclick="openvideopage()">
+        <div class="more-btn-title">More Video Works</div>
+      </div>
+    </section>
+
+    <section class="tools-section">
+      <div class="tools-container">
+        <h1>All Tools</h1>
+        <div class="card-grid">
+          <!-- Minesweeper Card -->
+          <div class="card" onclick="openMinesweeper()">
+            <div class="card-icon">
+              <i class="fas fa-bomb"></i>
+            </div>
+            <div class="card-content">
+              <div class="card-title">Minesweeper Game</div>
+              <div class="card-description">Play minesweeper with a more moredn look.</div>
+            </div>
+          </div>
+
+          <!-- Longer Appearance Card -->
+          <div class="card" onclick="openLongerAppearance()">
+            <div class="card-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="card-content">
+              <div class="card-title">Longer Appearance</div>
+              <div class="card-description">When the subtitle are not long enough.</div>
+            </div>
+          </div>
+
+          <!-- QR Code Scanner Card -->
+          <div class="card" onclick="openqrcode()">
+            <div class="card-icon">
+              <i class="fas fa-qrcode"></i>
+            </div>
+            <div class="card-content">
+              <div class="card-title">QR code scanner</div>
+              <div class="card-description">Scan a qrcode with our tool.</div>
+            </div>
+          </div>
+
+          <!-- Add this card to your .card-grid section -->
+          <div class="card" onclick="openManhwaTracker()">
+            <div class="card-icon">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <div class="card-content">
+              <div class="card-title">Manhwa Tracker</div>
+              <div class="card-description">Track your manhwa reading progress and chapters.</div>
+            </div>
+          </div>
+
+          <!-- Coming Soon Card -->
+          <div class="card" onclick="showComingSoon()">
+            <div class="card-icon">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <div class="card-content">
+              <div class="card-title">Coming Soon</div>
+              <div class="card-description">Stay tuned for our next update!</div>
+            </div>
+          </div>
+        </div>
+        <div class="no-results">No tools found matching your search</div>
+      </div>
+    </section>
+
+<!-- Add after tools-section -->
+<section class="thanks-section">
+  <div class="thanks-container">
+    <h2>Special Thanks To</h2>
+    
+    <!-- Top Row -->
+    <div class="thanks-row">
+      <div class="thanks-item">
+        <img src="./assets/logos/deepseek-color.png" alt="DeepSeek" class="thanks-logo">
+        <div class="thanks-text">
+          <h3>DeepSeek R1</h3>
+          <p>For writing 70% of HTML and all of JavaScript</p>
+        </div>
+      </div>
+      <div class="thanks-item">
+        <img src="./assets/logos/qwen-color.png" alt="Qwen" class="thanks-logo">
+        <div class="thanks-text">
+          <h3>Qwen 2.5</h3>
+          <p>For being a backup when deepseek is down</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="thanks-row">
+      <div class="thanks-item">
+        <img src="./assets/logos/netlify-icon-logo-png_seeklogo-477950.png" alt="Netlify" class="thanks-logo">
+        <div class="thanks-text">
+          <h3>Netlify</h3>
+          <p>For hosting and continuous deployment</p>
+        </div>
+      </div>
+      <div class="thanks-item">
+        <img src="./assets/logos/logo-logomark.png" alt="Firebase" class="thanks-logo">
+        <div class="thanks-text">
+          <h3>Firebase</h3>
+          <p>For database support</p>
+        </div>
+      </div>
+      <div class="thanks-item">
+        <img src="path/to/my-logo.png" alt="Myself" class="thanks-logo">
+        <div class="thanks-text">
+          <h3>Myself</h3>
+          <p>Ofcourse, designing and implementing this all</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <footer class="footer">
+      <div class="social-links">
+        <a href="https://youtube.com/@Vfrix" target="_blank">
+          <i class="fab fa-youtube"></i>
+          <span>Youtube</span>
+        </a>
+        <a href="https://github.com/Liiesl" target="_blank">
+          <i class="fab fa-github"></i>
+          <span>Github</span>
+        </a>
+        <a href="https://instagram.com/suryaalingga" target="_blank">
+          <i class="fab fa-instagram"></i>
+          <span>Instagram</span>
+        </a>
+      </div>
+      <p>&copy; 2023 Imnotliieing. All rights reserved. | <a href="/privacy-policy">Privacy Policy</a> | <a href="/terms-of-service">Terms of Service</a></p>
+    </footer>
+  </div>
+
+  <script>
+    function openMinesweeper() {
+      window.location.href = 'games/minesweeper.html';
+    }
+
+    function showComingSoon() {
+      alert("This feature is coming soon! Stay tuned for updates.");
+    }
+
+    function openLongerAppearance() {
+      window.location.href = 'tools/Longer-Appearance-Srt.html';
+    }
+
+    function openManhwaTracker() {
+      window.location.href = 'tools/manhwa-tracker.html';
+    }
+
+    function openqrcode() {
+      window.location.href = 'tools/qrcode.html';
+    }
+
+    function openillustrationpage() {
+      window.location.href = 'portfolio/illustration.html';
+    }
+
+    function openuipage() {
+      window.location.href = 'portfolio/ui-design.html';
+    }
+
+    function openvideopage() {
+      window.location.href = 'portfolio/video-editing.html';
+    }
+
+    // DOMContentLoaded event listener
+    window.addEventListener('DOMContentLoaded', function () {
+     // Existing code for fetching sidebar.html
+     fetch('./sidebar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sidebar-container').innerHTML = data;
+
+          const sidebar = document.getElementById('sidebar');
+          const sidebarOverlay = document.getElementById('sidebarOverlay');
+          const menuButton = document.getElementById('menuButton');
+
+          if (!sidebar || !sidebarOverlay || !menuButton) {
+            console.error('Sidebar elements not found. Ensure sidebar.html is properly loaded.');
+            return;
+          }
+
+          menuButton.addEventListener('click', function () {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+          });
+
+          sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+          });
+        })
+        .catch(error => {
+          console.error('Failed to load sidebar:', error);
+        });
+
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope:', registration.scope);
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed:', err);
+          });
+      }
+
+      // Existing search functionality
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchTerm = urlParams.get('search');
+
+      if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+        if (searchTerm) {
+          document.getElementById('searchInput').value = searchTerm;
+          filterSections(searchTerm.toLowerCase());
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function (e) {
+          filterSections(e.target.value.toLowerCase());
+        });
+      }
+
+      function filterSections(term) {
+        let found = false;
+        const sections = document.querySelectorAll('section:not(.tools-section)');
+        const cards = document.querySelectorAll('.card');
+
+        sections.forEach(section => {
+          section.classList.toggle('hidden-section', term !== '');
+        });
+
+        cards.forEach(card => {
+          const title = card.querySelector('.card-title').textContent.toLowerCase();
+          const description = card.querySelector('.card-description').textContent.toLowerCase();
+          const match = title.includes(term) || description.includes(term);
+          card.style.display = match ? 'flex' : 'none';
+          if (match) found = true;
+        });
+
+        document.querySelector('.no-results').style.display = found ? 'none' : 'block';
+      }
+    });
+
+    // Search handler for all pages
+    function handleSearch(event) {
+      event.preventDefault();
+      const searchTerm = document.getElementById('searchInput').value.trim();
+      const baseUrl = '/index.html'; // Always points to root
+
+      if (searchTerm) {
+          window.location.href = `${baseUrl}?search=${encodeURIComponent(searchTerm)}`;
+      } else {
+          window.location.href = baseUrl;
+      }
+    }
+  </script>
+</body>
+</html>

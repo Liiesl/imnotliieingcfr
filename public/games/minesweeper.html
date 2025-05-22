@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minesweeper</title>
+  <style>
+    /* General Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .main-menu, .game-over, .confirm-popup {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 15px;
+      padding: 20px 40px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    .main-menu.show, .game-over.show, .confirm-popup.show {
+      display: flex;
+    }
+    .main-menu h1, .game-over h1, .confirm-popup h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    .main-menu button, .game-over button, .confirm-popup button {
+      background-color: #2b2b2b;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 15px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .main-menu button:hover, .game-over button:hover, .confirm-popup button:hover {
+      background-color: #444444;
+      transform: scale(1.05);
+    }
+    .main-menu select {
+      background-color: #2b2b2b;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 15px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .main-menu select:hover {
+      background-color: #444444;
+      transform: scale(1.05);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(10, 40px);
+      grid-template-rows: repeat(10, 40px);
+      gap: 5px;
+      border-radius: 15px;
+      background-color: #2b2b2b;
+      padding: 10px;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #333333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #444444;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: all 0.1s ease;
+    }
+    .cell.revealed {
+      background-color: #444444;
+      border-color: #555555;
+      cursor: default;
+    }
+    .cell.mine {
+      background-color: #d00;
+      border-color: #f00;
+    }
+    .cell.flagged {
+      background-color: #ff9800;
+      border-color: #ffbb33;
+    }
+    .cell:hover:not(.revealed) {
+      transform: scale(1.05);
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #2b2b2b;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 15px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      display: none; /* Hide by default */
+    }
+    .back-button.show {
+      display: block; /* Show when the game is on */
+    }
+    .back-button:hover {
+      background-color: #444444;
+      transform: scale(1.05);
+    }
+    .confirm-popup {
+      width: 300px;
+      text-align: center;
+    }
+     /* Add this to the existing <style> section */
+    #mobileControls {
+      display: none;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: right;
+      margin-left: auto;
+      gap: 0.5rem;
+    }
+
+    #searchInput {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      outline: none;
+      width: 200px;
+    }
+
+    #searchInput::placeholder {
+      color: #b0b0b0;
+    }
+
+    .search-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .search-button:hover {
+      background: rgba(74, 158, 255, 0.1);
+      color: #4a9eff;
+    }
+
+    .search-form {
+      margin: 0;
+      padding: 0;
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+      #mobileControls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .cell.selected {
+        border: 2px solid #ff9800; /* Highlight selected cell */
+      }
+      .cell.pressed {
+      background-color: #222222; /* Darker background for pressed effect */
+      border: 2px inset #444444; /* Inset border to make it look sunken */
+      transform: scale(0.95); /* Slightly shrink the cell to simulate pressing */
+      }
+      .cell {
+        transition: background-color 0.2s ease, transform 0.2s ease, border 0.2s ease; /* Smooth transitions */
+      }
+    }
+  </style>
+</head>
+<body>  
+  <!-- Sidebar Container -->
+  <div id="sidebar-container"></div>
+  <header class="header">
+    <form class="search-form" onsubmit="handleSearch(event)">
+      <div class="search-bar">
+        <input type="text" placeholder="Search tools..." id="searchInput" name="q">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </form>
+  </header>
+  <div id="mainMenu" class="main-menu show">
+    <h1>Minesweeper</h1>
+    <label for="difficulty">Select Difficulty:</label>
+    <select id="difficulty">
+      <option value="beginner">Beginner</option>
+      <option value="easy">Easy</option>
+      <option value="normal">Normal</option>
+      <option value="hard">Hard</option>
+      <option value="extreme">Extreme</option>
+    </select>
+    <button id="startGame">Start Game</button>
+    <button id="backToHome">Back to Home</button> <!-- New button -->
+  </div>
+  <div id="gameOver" class="game-over">
+    <h1>Game Over!</h1>
+    <button id="retryButton">Retry</button>
+    <button id="BmenuButton">Main Menu</button>
+  </div>
+  <div id="board" class="board"></div>
+  <button id="backButton" class="back-button">Back to Menu</button> <!-- Back Button -->
+  <div id="confirmPopup" class="confirm-popup">
+    <h1>Are you sure?</h1>
+    <p>Returning to the menu will abort the current game.</p>
+    <button id="confirmYes">Yes</button>
+    <button id="confirmNo">No</button>
+  </div>
+    <div id="winPopup" class="game-over">
+      <h1>You Win!</h1>
+      <p id="winTime"></p>
+      <button id="winRetryButton">Start New Game</button>
+      <button id="winMenuButton">Back to Menu</button>
+    </div>
+  <div id="timer" style="position: absolute; top: 20px; right: 20px; color: #ffffff; font-size: 1.5rem;">Time: 0s</div>
+    <!-- Add this just before the closing </body> tag -->
+<div id="mobileControls" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);">
+  <button id="flagButton" style="padding: 10px 20px; margin: 5px; font-size: 1rem; border-radius: 15px; background-color: #2b2b2b; color: #ffffff; border: none; cursor: pointer;">🚩 Flag</button>
+  <button id="revealButton" style="padding: 10px 20px; margin: 5px; font-size: 1rem; border-radius: 15px; background-color: #2b2b2b; color: #ffffff; border: none; cursor: pointer;">🔍 Reveal</button>
+</div>
+  <script>
+    const difficulties = {
+      beginner: { size: 5, mines: 3 },
+      easy: { size: 8, mines: 5 },
+      normal: { size: 10, mines: 15 },
+      hard: { size: 12, mines: 30 },
+      extreme: { size: 15, mines: 50 }
+    };
+
+    let boardSize = 10;
+    let numMines = 20;
+    let board = [];
+    let mines = [];
+    let firstMove = true; // Track if it's the first move
+    const mainMenu = document.getElementById('mainMenu');
+    const gameOver = document.getElementById('gameOver');
+    const startGameButton = document.getElementById('startGame');
+    const backToHomeButton = document.getElementById('backToHome'); // New button reference
+    const retryButton = document.getElementById('retryButton');
+    const BmenuButton = document.getElementById('BmenuButton');
+    const backButton = document.getElementById('backButton'); // Back Button
+    const confirmPopup = document.getElementById('confirmPopup'); // Confirmation Popup
+    const confirmYesButton = document.getElementById('confirmYes'); // Yes Button
+    const confirmNoButton = document.getElementById('confirmNo'); // No Button
+    const difficultySelect = document.getElementById('difficulty'); // Difficulty dropdown
+    const flagButton = document.getElementById('flagButton');
+    const revealButton = document.getElementById('revealButton');
+    let lastClickedCell = null; // Track the selected cell for mobile controls
+
+    let timerInterval;
+    let startTime;
+
+    function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  function updateTimer() {
+    const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById('timer').textContent = `Time: ${elapsedTime}s`;
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
+
+    startGameButton.addEventListener('click', () => {
+      const selectedDifficulty = difficultySelect.value;
+      boardSize = difficulties[selectedDifficulty].size;
+      numMines = difficulties[selectedDifficulty].mines;
+      mainMenu.classList.remove('show');
+      backButton.classList.add('show'); // Show the back button
+      startGame();
+    });
+
+    backToHomeButton.addEventListener('click', () => {
+      window.location.href = '../index.html'; // Redirect to home page
+    });
+
+    retryButton.addEventListener('click', () => {
+      resetGame();
+      startGame();
+      gameOver.classList.remove('show');
+    });
+
+    BmenuButton.addEventListener('click', () => {
+      resetGame();
+      mainMenu.classList.add('show');
+      gameOver.classList.remove('show');
+      backButton.classList.remove('show'); // Hide the back button
+    });
+
+    backButton.addEventListener('click', () => {
+      confirmPopup.classList.add('show'); // Show the confirmation popup
+    });
+
+    confirmYesButton.addEventListener('click', () => {
+      confirmPopup.classList.remove('show'); // Hide the popup
+      resetGame(); // Reset the game
+      mainMenu.classList.add('show'); // Show the main menu
+      backButton.classList.remove('show'); // Hide the back button
+    });
+
+    confirmNoButton.addEventListener('click', () => {
+      confirmPopup.classList.remove('show'); // Hide the popup
+    });
+
+    winRetryButton.addEventListener('click', () => {
+      winPopup.classList.remove('show'); // Hide the win popup
+      resetGame();
+      startGame();
+    });
+
+    winMenuButton.addEventListener('click', () => {
+      winPopup.classList.remove('show'); // Hide the win popup
+      resetGame();
+      mainMenu.classList.add('show'); // Show the main menu
+      backButton.classList.remove('show'); // Hide the back button
+    });
+    
+    // Add event listeners for the mobile buttons
+    flagButton.addEventListener('click', () => {
+      if (selectedCell) {
+        toggleFlag(selectedCell.row, selectedCell.col);
+        lastClickedCell.classList.remove('pressed');
+        document.querySelector('.cell.selected')?.classList.remove('selected'); // Remove highlight
+      }
+    });
+
+    revealButton.addEventListener('click', () => {
+      if (selectedCell) {
+        revealCell(selectedCell.row, selectedCell.col);
+        lastClickedCell.classList.remove('pressed');
+        document.querySelector('.cell.selected')?.classList.remove('selected'); // Remove highlight
+      }
+    });
+
+    // Add this after the existing JavaScript code
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        document.getElementById('mobileControls').style.display = 'flex';
+      } else {
+        document.getElementById('mobileControls').style.display = 'none';
+      }
+    });
+
+    // Initial check on page load
+    if (window.innerWidth <= 768) {
+      document.getElementById('mobileControls').style.display = 'flex';
+    }
+
+    // Add event listeners for the mobile buttons
+    flagButton.addEventListener('click', () => {
+      if (lastClickedCell) {
+        toggleFlag(lastClickedCell.row, lastClickedCell.col);
+        document.querySelector('.cell.pressed')?.classList.remove('pressed'); // Remove pressed effect
+      }
+    });
+
+    revealButton.addEventListener('click', () => {
+      if (lastClickedCell) {
+        revealCell(lastClickedCell.row, lastClickedCell.col);
+        document.querySelector('.cell.pressed')?.classList.remove('pressed'); // Remove pressed effect
+      }
+    });
+
+    cell.addEventListener('click', () => {
+      // Remove the pressed effect from the previously clicked cell
+      document.querySelector('.cell.pressed')?.classList.remove('pressed');
+
+      // Add the pressed effect to the current cell
+      cell.classList.add('pressed');
+
+      // Update the last clicked cell
+      lastClickedCell = { row: r, col: c };
+
+      if (window.innerWidth > 768) {
+        // On desktop, reveal the cell immediately
+        revealCell(r, c);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', function () {
+      console.log("DOMContentLoaded event fired!"); // Add this line
+      fetch('../../sidebar.html')
+          .then(response => response.text())
+          .then(data => {
+              document.getElementById('sidebar-container').innerHTML = data;
+
+              // Reinitialize the sidebar functionality
+              const sidebar = document.getElementById('sidebar');
+              const sidebarOverlay = document.getElementById('sidebarOverlay');
+              const menuButton = document.getElementById('menuButton');
+
+              if (!sidebar || !sidebarOverlay || !menuButton) {
+                  console.error('Sidebar elements not found. Ensure sidebar.html is properly loaded.');
+                  return;
+              }
+
+              // Toggle sidebar visibility with smooth animation
+              menuButton.addEventListener('click', function () {
+                  sidebar.classList.toggle('open');
+                  sidebarOverlay.classList.toggle('open'); // Show/hide the overlay
+              });
+
+              // Close sidebar when clicking outside (on the overlay)
+              sidebarOverlay.addEventListener('click', function () {
+                  sidebar.classList.remove('open');
+                  sidebarOverlay.classList.remove('open'); // Hide the overlay
+              });
+          })
+          .catch(error => {
+              console.error('Failed to load sidebar:', error);
+          });
+    });
+
+    function revealCell(r, c) {
+      const cell = board[r][c];
+      if (cell.revealed || cell.flagged) return;
+      const cellElement = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      cellElement.classList.add('revealed');
+      cell.revealed = true;
+
+      if (firstMove) {
+        firstMove = false;
+        startTimer();
+        placeMines(r, c); // Place mines after the first click, excluding the first cell
+        if (cell.mine || countAdjacentMines(r, c) > 0) {
+          moveMine(r, c);
+          revealCell(r, c); // Re-reveal the cell after moving the mine
+          return;
+        }
+      }
+
+      if (cell.mine) {
+        cellElement.classList.add('mine');
+        gameOver.classList.add('show');
+        revealAllMines();
+        stopTimer();
+        return;
+      }
+
+      const adjacentMines = countAdjacentMines(r, c);
+      if (adjacentMines > 0) {
+        cellElement.textContent = adjacentMines;
+      } else {
+        revealAdjacentCells(r, c);
+      }
+      checkWin();
+    }
+
+    function revealAdjacentCells(r, c) {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize) {
+            const adjacentCell = board[nr][nc];
+            if (!adjacentCell.revealed && !adjacentCell.flagged) {
+              revealCell(nr, nc);
+            }
+          }
+        }
+      }
+    }
+
+    function moveMine(r, c) {
+      board[r][c].mine = false;
+      mines = mines.filter(mine => !(mine.row === r && mine.col === c));
+      placeMines(r, c);
+    }
+
+    function placeMines(excludeRow, excludeCol) {
+      let placedMines = 0;
+      while (placedMines < numMines) {
+        const r = Math.floor(Math.random() * boardSize);
+        const c = Math.floor(Math.random() * boardSize);
+        if ((r !== excludeRow || c !== excludeCol) && !board[r][c].mine) {
+          board[r][c].mine = true;
+          mines.push({ row: r, col: c });
+          placedMines++;
+        }
+      }
+    }
+
+    function countAdjacentMines(r, c) {
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize && board[nr][nc].mine) {
+            count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function revealAllMines() {
+      for (const { row, col } of mines) {
+        const cellElement = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        cellElement.classList.add('revealed', 'mine');
+      }
+    }
+
+    function checkWin() {
+      let revealedCount = 0;
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          if (board[r][c].revealed) {
+            revealedCount++;
+          }
+        }
+      }
+      if (revealedCount === boardSize * boardSize - numMines) {
+        stopTimer(); // Stop the timer on win
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        alert(`You Win! Time: ${elapsedTime}s`);
+        winPopup.classList.add('show'); // Show the win popup
+      }
+    }
+
+    function resetGame() {
+      board = [];
+      mines = [];
+      firstMove = true;
+      createBoard();
+      const boardElement = document.getElementById('board');
+      boardElement.innerHTML = '';
+      document.querySelector('.cell.selected')?.classList.remove('selected'); // Remove any highlighted cell
+    }
+    function startGame() {
+      resetGame();
+    }
+
+    function createBoard() {
+      const boardElement = document.getElementById('board');
+      boardElement.innerHTML = '';
+      boardElement.style.gridTemplateColumns = `repeat(${boardSize}, 40px)`;
+      boardElement.style.gridTemplateRows = `repeat(${boardSize}, 40px)`;
+      
+      for (let r = 0; r < boardSize; r++) {
+        const row = [];
+        for (let c = 0; c < boardSize; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+
+          cell.row = r;
+          cell.col = c;
+
+          cell.addEventListener('click', () => {
+            // Remove the pressed effect from the previously clicked cell
+            document.querySelector('.cell.pressed')?.classList.remove('pressed');
+
+            // Add the pressed effect to the current cell
+            cell.classList.add('pressed');
+
+            // Update the last clicked cell
+            lastClickedCell = cell;
+
+            if (window.innerWidth > 768) {
+              // On desktop, reveal the cell immediately
+              revealCell(cell.row, cell.col);
+            }
+          });
+
+          cell.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            toggleFlag(cell.row, cell.col);
+          });
+          
+          boardElement.appendChild(cell);
+          row.push({ revealed: false, mine: false, flagged: false });
+        }
+        board.push(row);
+      }
+    }
+
+    function toggleFlag(r, c) {
+      const cell = board[r][c];
+      const cellElement = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      if (cell.revealed) return;
+      cell.flagged = !cell.flagged;
+      if (cell.flagged) {
+        cellElement.classList.add('flagged');
+        cellElement.textContent = '🚩';
+      } else {
+        cellElement.classList.remove('flagged');
+        cellElement.textContent = '';
+      }
+    }
+    
+    function revealAllMines() {
+      for (const { row, col } of mines) {
+        const cellElement = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        cellElement.classList.add('revealed', 'mine');
+      }
+    }
+
+    function checkWin() {
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          if (!board[r][c].revealed && !board[r][c].mine) {
+            return;
+          }
+        }
+      }
+      alert('You Win!');
+    }
+
+    function resetGame() {
+      board = [];
+      mines = [];
+      firstMove = true; // Reset first move flag
+      const boardElement = document.getElementById('board');
+      boardElement.innerHTML = '';
+    }
+
+    function startGame() {
+      createBoard();
+    }
+        // Search handler for all pages
+        function handleSearch(event) {
+            event.preventDefault();
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const baseUrl = '/index.html'; // Always points to root
+
+            if (searchTerm) {
+                window.location.href = `${baseUrl}?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                window.location.href = baseUrl;
+            }
+            }
+
+        // On home page load
+         window.addEventListener('DOMContentLoaded', function () {
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchTerm = urlParams.get('search');
+
+            // Only run on home page (root index.html)
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                // Initialize search if parameter exists
+                if (searchTerm) {
+                    document.getElementById('searchInput').value = searchTerm;
+                    filterSections(searchTerm.toLowerCase());
+                }
+
+                // Initialize search functionality
+                document.getElementById('searchInput').addEventListener('input', function(e) {
+                    filterSections(e.target.value.toLowerCase());
+                });
+            }
+
+        function filterSections(term) {
+            const sections = document.querySelectorAll('section:not(.tools-section)');
+            const cards = document.querySelectorAll('.card');
+
+            sections.forEach(section => {
+            section.classList.toggle('hidden-section', term !== '');
+            });
+
+            cards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            const description = card.querySelector('.card-description').textContent.toLowerCase();
+            card.style.display = (title.includes(term) || description.includes(term)) 
+                ? 'flex' 
+                : 'none';
+            });
+
+            document.querySelector('.tools-section').style.display = 'block';
+        }
+        });
+</script>
+</body>
+</html>
