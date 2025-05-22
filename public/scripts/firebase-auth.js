@@ -3,7 +3,7 @@ let auth;
 
 // Initialize Firebase and set up auth state listener
 function initializeAuth() {
-  return fetch('/.netlify/functions/getFirebaseConfig')
+  return fetch('/getFirebaseConfig')
     .then(response => response.json())
     .then(firebaseConfig => {
       // Check if Firebase is already initialized
