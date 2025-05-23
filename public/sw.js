@@ -1,17 +1,17 @@
-const CACHE_NAME = 'v1.1';
+const CACHE_NAME = 'v1.2.1.1';
 const ASSETS = [
   '/',
   '/index.html',
   '/sidebar.html',
   '/404.html',
   '/games/minesweeper.html',
-  '/tools/Longer-Appearance.html',
+  '/tools/Longer-Appearance-Srt.html',
   '/tools/qrcode.html',
   '/tools/Manhwa-Tracker.html',
   '/auth.css',
   '/styles.css',
   '/login.html',
-  '/manhwa.css',
+  '/tools/manhwa.css',
   '/signup.html',
   '/scripts/auth.js',
   '/scripts/firebase-auth.js'
